@@ -1,11 +1,15 @@
 #!/bin/sh
 # Yamtrack on Railway.
 #
-# - Maps Railway's injected PORT onto nginx via YAMTRACK_INTERNAL_PORT
-#   (the upstream entrypoint rewrites both nginx confs with sed on every
-#   boot). When PORT is unset it defaults to 8080 — Railway's healthcheck
-#   prober targets its default service port. Never 23847: reserved for
-#   gunicorn inside the container (upstream entrypoint refuses it).
+# - Maps Railway's injected PORT onto nginx. 0.26.3's own entrypoint does
+#   NOT honour YAMTRACK_INTERNAL_PORT (upstream added that support after
+#   this release — verified in the v0.26.3 tag: its entrypoint only runs
+#   migrate, maps PUID/PGID, chowns, and execs supervisord, while nginx
+#   always listens on 8000). So this wrapper remaps the listen port itself
+#   with the same sed upstream added later, before handing off. When PORT
+#   is unset it defaults to 8080 — Railway's healthcheck prober targets
+#   its default service port. Never 23847: reserved for gunicorn (master;
+#   0.26.3's gunicorn binds 8001 — either way, keep clear of both).
 # - Derives CSRF trusted origins + allowed hosts from the live
 #   RAILWAY_PUBLIC_DOMAIN via URLS (upstream's shortcut for both settings;
 #   SECURE_PROXY_SSL_HEADER is already set upstream). Never bake a
@@ -36,6 +40,16 @@ export REDIS_URL="redis://${REDIS_HOST:-localhost}:6379"
 
 : "${SECRET:?SECRET is required (generated template variable)}"
 : "${YAMTRACK_ADMIN_PASSWORD:?YAMTRACK_ADMIN_PASSWORD is required (generated template variable)}"
+
+# Remap nginx onto $PORT (see header): 0.26.3 ignores
+# YAMTRACK_INTERNAL_PORT, so rewrite both nginx confs here. The ipv6 conf
+# carries "listen 8000; listen [::]:8000;" on one line; the first pattern
+# takes the plain listen, the second the [::] listen — same pair of
+# expressions the upstream entrypoint gained after 0.26.3.
+sed -i \
+  -e "s/listen [0-9]\{1,5\};/listen ${YAMTRACK_INTERNAL_PORT};/" \
+  -e "s/listen \[::\]:[0-9]\{1,5\};/listen [::]:${YAMTRACK_INTERNAL_PORT};/" \
+  /etc/nginx/nginx.conf /etc/nginx/nginx.ipv6.conf
 
 # Migrate first: createsuperuser needs the auth tables. Runs as root; the
 # upstream entrypoint chowns the db dir to abc afterwards, so gunicorn

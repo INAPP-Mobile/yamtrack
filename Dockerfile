@@ -13,11 +13,18 @@
 # itself maps PUID/PGID onto its `abc` user and chowns /yamtrack, db and
 # staticfiles before execing supervisord (nginx + gunicorn + celery).
 #
-# PORT: the stock image listens on 8000 via nginx, but honours
-# YAMTRACK_INTERNAL_PORT — the wrapper entrypoint maps Railway's injected
-# PORT onto it on every boot (upstream entrypoint rewrites both nginx confs
-# with sed). Never set YAMTRACK_INTERNAL_PORT=23847: that port is reserved
-# for gunicorn inside the container.
+# PORT: the stock image listens on 8000 via nginx, but 0.26.3's own
+# entrypoint does NOT honour YAMTRACK_INTERNAL_PORT (upstream added that
+# support after this release — verified against the v0.26.3 tag). The
+# wrapper entrypoint remaps the nginx listen port itself with the same sed
+# upstream added later. Never set YAMTRACK_INTERNAL_PORT=8001: that is
+# gunicorn's bind port inside this image (0.26.3's config/gunicorn.py).
+#
+# HEALTHCHECK: the image ships its own HEALTHCHECK probing
+# 127.0.0.1:8000/health/ — stale once the port is remapped, and Railway
+# probes /health/ externally anyway, so the wrapper disables the
+# in-container probe (HEALTHCHECK NONE below) rather than letting it
+# report the container unhealthy forever.
 #
 # Persistence: SQLite lives at /yamtrack/db/db.sqlite3 (settings create the
 # dir on import; DB_HOST unset selects SQLite). The Railway volume mounts
@@ -66,6 +73,12 @@ RUN chmod +x /railway-entrypoint.sh
 # Railway's PORT by the wrapper entrypoint); when PORT is unset it defaults
 # to 8080 — Railway's healthcheck prober targets its default service port.
 EXPOSE 8080
+
+# Disable the image's in-container HEALTHCHECK: it probes the hardcoded
+# 127.0.0.1:8000/health/ and would report unhealthy after the port remap.
+# Railway probes /health/ externally (see railway.json) — that is the
+# health signal that matters.
+HEALTHCHECK NONE
 
 # No CMD: the wrapper entrypoint migrates + seeds the admin, then execs
 # the upstream entrypoint, which re-runs migrations, maps PUID/PGID, chowns
