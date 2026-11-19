@@ -6,7 +6,7 @@ Yamtrack is a self-hosted media tracker for movies, TV shows, anime, manga, vide
 
 Screenshot: upstream's own homepage screenshot (FuzzyGrim/Yamtrack README), showing the media library with posters, ratings, and progress.
 
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/yamtrack?utm_campaign=yamtrack)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/yamtrack-1?utm_campaign=yamtrack)
 
 ## Source Repository
 

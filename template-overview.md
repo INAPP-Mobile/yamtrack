@@ -1,4 +1,4 @@
-[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/yamtrack?utm_campaign=yamtrack)
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.com/deploy/yamtrack-1?utm_campaign=yamtrack)
 
 ![Yamtrack homepage — upstream screenshot](https://raw.githubusercontent.com/INAPP-Mobile/yamtrack/main/assets/yamtrack-homepage.png)
 
