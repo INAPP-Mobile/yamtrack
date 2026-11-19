@@ -62,6 +62,18 @@ ENV TZ=UTC \
     REGISTRATION=False \
     ADMIN_ENABLED=True
 
+# Missing upstream static files: base.html references
+# favicon/safari-pinned-tab.svg and favicon/browserconfig.xml, but neither
+# exists in the v0.26.3 tree (verified via the git tree — the favicon dir
+# holds only the PNGs, .ico and site.webmanifest), so both 404 on every
+# page. Ship replacements in the wrapper image at the exact static paths
+# nginx serves (/yamtrack/staticfiles/ is the STATIC_ROOT): the SVG is a
+# monochrome Y in upstream's pinned-tab style (black shape, color applied
+# by the browser from the template's color="#181a1b"), and the XML points
+# at the shipped android-chrome-192x192 tile with the same #181a1b tile
+# color. Same fix shape as the Stump run's missing apple-touch-icon.
+COPY static/favicon/ /yamtrack/staticfiles/favicon/
+
 COPY entrypoint.sh /railway-entrypoint.sh
 RUN chmod +x /railway-entrypoint.sh
 
