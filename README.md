@@ -41,7 +41,7 @@ One click deploys Yamtrack 0.26.3 (official `ghcr.io/fuzzygrim/yamtrack` image, 
 | `ADMIN_ENABLED` | `True` (baked) | Django's `/admin/` interface is enabled for user management. |
 | `TZ` | `UTC` (baked) | Container timezone. |
 | `URLS` | derived at boot from `RAILWAY_PUBLIC_DOMAIN` | CSRF trusted origins + allowed hosts (upstream's shortcut for both settings). Set explicitly only if you serve it behind a custom domain. |
-| `YAMTRACK_INTERNAL_PORT` | mapped from `PORT` on every boot | Port nginx listens on inside the container. Never set to `23847` — reserved for gunicorn. |
+| `YAMTRACK_INTERNAL_PORT` | set from `PORT` by the wrapper entrypoint | Port nginx listens on inside the container. 0.26.3's own entrypoint ignores this variable, so the wrapper rewrites the nginx confs itself. Never set to `8001` — gunicorn's bind port in this image. |
 | `YAMTRACK_ADMIN_USERNAME` | `admin` | Username of the seeded admin account. |
 | `TMDB_API` | shared default ships upstream | TMDB key for movies and TV. Bring your own for heavy use. |
 | `TMDB_LANG` | `en-US` (upstream default) | Metadata language (ISO 639-1, optionally + country code). |
@@ -58,7 +58,7 @@ One click deploys Yamtrack 0.26.3 (official `ghcr.io/fuzzygrim/yamtrack` image, 
 | `CELERY_REDIS_URL` | defaults to `REDIS_URL` | Celery broker URL if different from the cache URL. |
 | `HEALTHCHECK_CELERY_PING_TIMEOUT` | `1` (upstream default) | Timeout for the `/health/` celery ping. |
 | `DB_HOST` | — (optional) | Set to use PostgreSQL instead of the default SQLite (then also `DB_NAME`, `DB_USER`, `DB_PASSWORD`; see upstream docs). |
-| `PORT` | injected by Railway | Mapped onto nginx via `YAMTRACK_INTERNAL_PORT` on every boot. |
+| `PORT` | injected by Railway | Mapped onto nginx by the wrapper entrypoint on every boot. |
 
 See the [upstream environment variables documentation](https://fuzzygrim.github.io/Yamtrack/dev/env-variables/) for the full list, including social-auth / OIDC settings.
 
